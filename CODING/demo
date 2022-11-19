@@ -1,1 +1,96 @@
+Transmitter
+#include <SPI.h>
+#include <nRF24L01.h>
+#include <RF24.h>
+RF24 radio(9, 10); // CE, CSN        
+const byte address[6] = "00001";    
+void setup() 
+{
+    Serial.begin(9600);
+    radio.begin();                  
+    radio.openWritingPipe(address);
+    radio.setPALevel(RF24_PA_MIN);  .
+    radio.stopListening();         
+}
+void loop()
+{
 
+
+const char text[] = "HELLO WORLD! ";
+radio.write(&text, sizeof(text));                 
+delay(1000)
+
+}
+Receiver
+ //lcd connected with i2c
+  #include <Wire.h> 
+  #include <LiquidCrystal_I2C.h>
+  #include <SPI.h>
+  #include <nRF24L01.h>
+  #include <RF24.h>
+  
+  RF24 radio(9, 10); // CE, CSN
+  
+  const byte address[6] = "00001";
+  const int ENA = 6;
+  const int ENB = 5;
+  
+  LiquidCrystal_I2C lcd(0x27,20,4);
+  
+  void setup() 
+  {
+    pinMode(8, OUTPUT);
+    pinMode(7, OUTPUT);
+    pinMode(4, OUTPUT);
+    pinMode(3, OUTPUT);
+    pinMode (ENA, OUTPUT);
+    pinMode (ENB, OUTPUT);
+    
+    Serial.begin(9600);
+    
+    radio.begin();
+    radio.openReadingPipe(0, address);   //Setting the address at which we will receive the data
+    radio.setPALevel(RF24_PA_MIN);       //You can set this as minimum or maximum depending on the distance between the transmitter and receiver.
+    radio.startListening();              //This sets the module as receiver
+    
+    lcd.init();                      // initialize the lcd 
+    lcd.init();
+    // Print a message to the LCD.
+    lcd.backlight();
+  }
+  void loop()
+  {
+    if (radio.available())              //Looking for the data.
+    {
+      char text[32] = "";                 //Saving the incoming data
+      radio.read(&text, sizeof(text));    //Reading the data
+      Serial.println(text);
+
+      lcd.setCursor(0,0);
+      lcd.print("   CONNECTED    ");
+      
+      // Vehicle movement
+      digitalWrite(8,HIGH);
+      digitalWrite(7,LOW);
+      digitalWrite(4,HIGH);
+      digitalWrite(3,LOW);
+      analogWrite(ENA,150);
+      analogWrite(ENB,150); 
+    }
+    else
+    {
+            digitalWrite(8,HIGH);
+      digitalWrite(7,LOW);
+      digitalWrite(4,HIGH);
+      digitalWrite(3,LOW);
+      analogWrite(ENA,255);
+      analogWrite(ENB,255); 
+      
+      Serial.println("OUT OF RANGE");
+
+      lcd.setCursor(0,0);
+      lcd.print("  CHECKING THE   ");
+      lcd.setCursor(0,1);
+      lcd.print("    SERVER      ");
+    }
+  }
